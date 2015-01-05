@@ -8,6 +8,8 @@
 #include <windows.h>
 #endif
 
+#include "Json.h"
+
 namespace
 {
 ECefRuntimeMouseButton GetMouseButton(const FPointerEvent& InPointerEvent)
@@ -545,7 +547,7 @@ FVector2D SRadiantWebViewHUDElement::AbsoluteToLocal(const FGeometry& MyGeometry
 }
 
 URadiantWebViewHUDElement::URadiantWebViewHUDElement(const FObjectInitializer& ObjectInitializer)
-: Super(ObjectInitializer)
+	:Super(ObjectInitializer)
 {
 	bVisible = true;
 
@@ -674,7 +676,83 @@ void URadiantWebViewHUDElement::CallJavaScriptFunction(const FString& HookName, 
 
 void URadiantWebViewHUDElement::OnExecuteJSHook(const FString& HookName, ICefRuntimeVariantList* Arguments)
 {
+	// Use the Radiant way, looking for blueprints deriving from the HUD element.
 	FJavaScriptHelper::ExecuteHook(this, HookName, Arguments);
+
+	// Use the C++ way, calling any interested listeners.
+	HandleJSONFunctions(HookName, Arguments);
+}
+
+bool URadiantWebViewHUDElement::HandleJSONFunctions(const FString& HookName, ICefRuntimeVariantList* Arguments)
+{
+	if (JSONFunctions.find(HookName) != JSONFunctions.end())
+	{
+		auto func = JSONFunctions[HookName];
+
+		// Get the first argument, hopefully it's a string.
+
+		if (Arguments->GetSize() == 1)
+		{
+			auto arg0 = Arguments->GetValue(0);
+
+			if (arg0->IsString())
+			{
+				ICefRuntimeVariantString *argStr = static_cast<ICefRuntimeVariantString *>(arg0);
+
+				FString jsonStr = FString(argStr->GetValue());
+
+				// Let's parse it and pass a FJsonObject
+				
+				const TSharedRef<TJsonReader<TCHAR>> jsonReader = FJsonStringReader::Create(jsonStr);
+
+				TSharedPtr<FJsonObject> dataObj = MakeShareable(new FJsonObject());
+
+				if (FJsonSerializer::Deserialize(jsonReader, dataObj))
+				{
+					func(dataObj);
+				} else
+				{
+					UE_LOG(RadiantUILog, Error, TEXT("Function hook %s, incoming argument failed to parse as JSON: %s"), *HookName, *jsonStr);
+					return false;
+				}
+
+				return true;
+			} else
+			{
+				UE_LOG(RadiantUILog, Error, TEXT("Function hook %s, incoming argument is not a string."), *HookName);
+			}
+		} else
+		{
+			UE_LOG(RadiantUILog, Error, TEXT("Function hook %s, argument count not 1 (it's %d)"), *HookName, Arguments->GetSize());
+		}
+
+	}
+
+	return false;
+}
+
+void URadiantWebViewHUDElement::BindJSONFunction(FString hookName, std::function<void(TSharedPtr<FJsonObject>)> boundFunction)
+{
+	if (JSONFunctions.find(hookName) != JSONFunctions.end())
+	{
+		UE_LOG(RadiantUILog, Warning, TEXT("Function hook %s is already bound, rebinding to new function"), *hookName);
+	}
+
+	JSONFunctions[hookName] = boundFunction;
+}
+
+
+void URadiantWebViewHUDElement::UnbindJSONFunction(FString hookName)
+{
+	if (JSONFunctions.find(hookName) != JSONFunctions.end())
+	{
+		JSONFunctions.erase(hookName);
+	}
+}
+
+void URadiantWebViewHUDElement::RemoveAllJSONBindings()
+{
+	JSONFunctions.clear();
 }
 
 TScriptInterface<IRadiantJavaScriptFunctionCallTargetInterface> URadiantWebViewHUDElement::GetJavaScriptCallContext()

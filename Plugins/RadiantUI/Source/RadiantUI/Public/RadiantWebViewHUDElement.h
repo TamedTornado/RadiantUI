@@ -7,8 +7,11 @@
 #include "SCompoundWidget.h"
 #include "RadiantWebView.h"
 #include "RadiantJavaScriptFunctionCallTargetInterface.h"
+#include <functional>
+#include <map>
 #include "RadiantWebViewHUDElement.generated.h"
 
+class FJsonObject;
 class ARadiantWebViewHUD;
 class URadiantWebViewHUDElement;
 struct CefRuntimeMouseEvent;
@@ -172,13 +175,18 @@ public:
 	virtual UWorld* GetWorld() const override;
 	// End UObject Interface
 
+	void BindJSONFunction(FString hookName, std::function<void(TSharedPtr<FJsonObject>)> boundFunction);
+	void UnbindJSONFunction(FString hookName);
+	void RemoveAllJSONBindings();
+
 private:
+	std::map<FString, std::function<void(TSharedPtr<FJsonObject>)>> JSONFunctions;
+	bool HandleJSONFunctions(const FString& HookName, ICefRuntimeVariantList* Arguments);
 
 	UWorld* World;
 
 	void SetSlateVisibility();
 	void OnExecuteJSHook(const FString& HookName, ICefRuntimeVariantList* Arguments);
-	
 	friend class ARadiantWebViewHUD;
 
 	TSharedPtr<class SWeakWidget> Container;

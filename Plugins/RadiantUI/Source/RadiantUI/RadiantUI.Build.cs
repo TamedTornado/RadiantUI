@@ -36,7 +36,8 @@ namespace UnrealBuildTool.Rules
 					"InputCore",
                     "RenderCore",
                     "ShaderCore",
-                    "RHI"
+                    "RHI",
+                    "Json"
 				}
 			);
 

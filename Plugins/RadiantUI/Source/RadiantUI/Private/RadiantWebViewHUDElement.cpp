@@ -9,6 +9,7 @@
 #endif
 
 #include "Json.h"
+#include "StringConv.h"
 
 namespace
 {
@@ -401,7 +402,7 @@ FReply SRadiantWebViewHUDElement::OnMouseMove(const FGeometry& MyGeometry, const
 	GetMouseState(MyGeometry, MouseEvent, Event);
 	HUDElement->WebView->GetBrowser()->SendMouseMoveEvent(Event, false);
 
-	//UE_LOG(RadiantUILog, Log, TEXT("MouseMove %d x %d"), Event.X, Event.Y);
+	UE_LOG(RadiantUILog, Log, TEXT("MouseMove %d x %d"), Event.X, Event.Y);
 
 	return FReply::Handled();
 }
@@ -660,7 +661,40 @@ void URadiantWebViewHUDElement::SetSlateVisibility()
 	}
 }
 
-void URadiantWebViewHUDElement::CallJavaScriptFunction(const FString& HookName, UObject* Parameters)
+void URadiantWebViewHUDElement::CallJavaScriptFunction(std::string HookName, std::string stringData)
+{
+	if (!HookName.empty() && !stringData.empty() && WebView.IsValid())
+	{
+		ICefRuntimeVariantList* List = WebView->GetVariantFactory()->CreateList(0);
+
+//		FTCHARToUTF8 Convert(*stringData);
+		ICefRuntimeVariant* Variant = WebView->GetVariantFactory()->CreateString(stringData.c_str());//Convert.Get());
+
+		if (Variant)
+		{
+			List->SetValue(List->GetSize(), Variant);
+		}
+
+		if (List->GetSize() < 1)
+		{
+			List->Release();
+			List = nullptr;
+
+			UE_LOG(RadiantUILog, Error, TEXT("Failed to make a argument list for the function"));
+			return;
+		}
+		//FTCHARToUTF8 HookNameConvert(*HookName);
+
+		WebView->CallJavaScriptFunction(HookName.c_str(), List);
+
+		if (List)
+		{
+			List->Release();
+		}
+	}
+}
+
+void URadiantWebViewHUDElement::CallJavaScriptFunction(const FString &HookName, UObject* Parameters)
 {
 	if (!HookName.IsEmpty() && Parameters && WebView.IsValid())
 	{
@@ -679,11 +713,13 @@ void URadiantWebViewHUDElement::OnExecuteJSHook(const FString& HookName, ICefRun
 	// Use the Radiant way, looking for blueprints deriving from the HUD element.
 	FJavaScriptHelper::ExecuteHook(this, HookName, Arguments);
 
+	FTCHARToUTF8 HookNameConvert(*HookName);
+
 	// Use the C++ way, calling any interested listeners.
-	HandleJSONFunctions(HookName, Arguments);
+	HandleJSONFunctions(HookNameConvert.Get(), Arguments);
 }
 
-bool URadiantWebViewHUDElement::HandleJSONFunctions(const FString& HookName, ICefRuntimeVariantList* Arguments)
+bool URadiantWebViewHUDElement::HandleJSONFunctions(std::string HookName, ICefRuntimeVariantList* Arguments)
 {
 	if (JSONFunctions.find(HookName) != JSONFunctions.end())
 	{
@@ -691,7 +727,12 @@ bool URadiantWebViewHUDElement::HandleJSONFunctions(const FString& HookName, ICe
 
 		// Get the first argument, hopefully it's a string.
 
-		if (Arguments->GetSize() == 1)
+		if (Arguments->GetSize() == 0)
+		{
+			// If there's no arguments, just send it with a nullptr.
+			func(nullptr);
+			return true;
+		} else if (Arguments->GetSize() == 1)
 		{
 			auto arg0 = Arguments->GetValue(0);
 
@@ -712,18 +753,18 @@ bool URadiantWebViewHUDElement::HandleJSONFunctions(const FString& HookName, ICe
 					func(dataObj);
 				} else
 				{
-					UE_LOG(RadiantUILog, Error, TEXT("Function hook %s, incoming argument failed to parse as JSON: %s"), *HookName, *jsonStr);
+					UE_LOG(RadiantUILog, Error, TEXT("Function hook %s, incoming argument failed to parse as JSON: %s"), UTF8_TO_TCHAR(HookName.c_str()), *jsonStr);
 					return false;
 				}
 
 				return true;
 			} else
 			{
-				UE_LOG(RadiantUILog, Error, TEXT("Function hook %s, incoming argument is not a string."), *HookName);
+				UE_LOG(RadiantUILog, Error, TEXT("Function hook %s, incoming argument is not a string."), UTF8_TO_TCHAR(HookName.c_str()));
 			}
 		} else
 		{
-			UE_LOG(RadiantUILog, Error, TEXT("Function hook %s, argument count not 1 (it's %d)"), *HookName, Arguments->GetSize());
+			UE_LOG(RadiantUILog, Error, TEXT("Function hook %s, argument count not 0 or 1 (it's %d)"), UTF8_TO_TCHAR(HookName.c_str()), Arguments->GetSize());
 		}
 
 	}
@@ -731,18 +772,18 @@ bool URadiantWebViewHUDElement::HandleJSONFunctions(const FString& HookName, ICe
 	return false;
 }
 
-void URadiantWebViewHUDElement::BindJSONFunction(FString hookName, std::function<void(TSharedPtr<FJsonObject>)> boundFunction)
+void URadiantWebViewHUDElement::BindJSONFunction(std::string hookName, std::function<void(TSharedPtr<FJsonObject>)> boundFunction)
 {
 	if (JSONFunctions.find(hookName) != JSONFunctions.end())
 	{
-		UE_LOG(RadiantUILog, Warning, TEXT("Function hook %s is already bound, rebinding to new function"), *hookName);
+		UE_LOG(RadiantUILog, Warning, TEXT("Function hook %s is already bound, rebinding to new function"), UTF8_TO_TCHAR(hookName.c_str()));
 	}
 
 	JSONFunctions[hookName] = boundFunction;
 }
 
 
-void URadiantWebViewHUDElement::UnbindJSONFunction(FString hookName)
+void URadiantWebViewHUDElement::UnbindJSONFunction(std::string hookName)
 {
 	if (JSONFunctions.find(hookName) != JSONFunctions.end())
 	{

@@ -168,20 +168,20 @@ public:
 	TScriptInterface<IRadiantJavaScriptFunctionCallTargetInterface> GetJavaScriptCallContext();
 
 	virtual void CallJavaScriptFunction(const FString& HookName, UObject* Parameters) override;
-
 	// Begin UObject Interface
 	virtual void PostInitProperties() override;
 	virtual void Serialize(FArchive& Ar) override;
 	virtual UWorld* GetWorld() const override;
 	// End UObject Interface
 
-	void BindJSONFunction(FString hookName, std::function<void(TSharedPtr<FJsonObject>)> boundFunction);
-	void UnbindJSONFunction(FString hookName);
+	void CallJavaScriptFunction(std::string HookName, std::string stringData);
+	void BindJSONFunction(std::string hookName, std::function<void(TSharedPtr<FJsonObject>)> boundFunction);
+	void UnbindJSONFunction(std::string hookName);
 	void RemoveAllJSONBindings();
 
 private:
-	std::map<FString, std::function<void(TSharedPtr<FJsonObject>)>> JSONFunctions;
-	bool HandleJSONFunctions(const FString& HookName, ICefRuntimeVariantList* Arguments);
+	std::map<std::string, std::function<void(TSharedPtr<FJsonObject>)>> JSONFunctions;
+	bool HandleJSONFunctions(std::string HookName, ICefRuntimeVariantList* Arguments);
 
 	UWorld* World;
 

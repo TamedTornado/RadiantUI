@@ -40,9 +40,12 @@ public:
 	virtual void PreDrawHUD() {}
 	virtual void PostDrawHUD() {}
 
+	FVector2D GetViewportSize();
+
+	// The RadiantGameViewportClient sends mouse events to the HUD indiscriminately, allowing it to give them to its children or not.
+	void HandleMouseMove(int32 MouseX, int32 MouseY);
+
 private:
 
 	friend class SRadiantWebViewHUD;
-
-	void DrawHUDElement(const FVector2D& ViewportSize, URadiantWebViewHUDElement* InElement);
 };

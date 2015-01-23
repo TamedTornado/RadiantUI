@@ -10,6 +10,7 @@
 
 #include "Json.h"
 #include "StringConv.h"
+#include "CanvasItem.h"
 
 namespace
 {
@@ -586,19 +587,19 @@ UWorld* URadiantWebViewHUDElement::GetWorld() const
 void URadiantWebViewHUDElement::SetVisible(bool IsVisible)
 {
 	bVisible = IsVisible;
-	SetSlateVisibility();
+//	SetSlateVisibility();
 }
 
 void URadiantWebViewHUDElement::SetHitTest(TEnumAsByte<ERadiantHUDElementHitTest::Type> InHitTest)
 {
 	HitTest = InHitTest;
-	SetSlateVisibility();
+//	SetSlateVisibility();
 }
 
 void URadiantWebViewHUDElement::SetInputMode(TEnumAsByte<ERadiantHUDElementInputMode::Type> InInputMode)
 {
 	InputMode = InInputMode;
-	SetSlateVisibility();
+//	SetSlateVisibility();
 }
 
 bool URadiantWebViewHUDElement::CanNavigateForward()
@@ -647,18 +648,6 @@ float URadiantWebViewHUDElement::GetRefreshRate()
 {
 	check(WebView.IsValid());
 	return WebView->GetRefreshRate();
-}
-
-void URadiantWebViewHUDElement::SetSlateVisibility()
-{
-	if (!bVisible)
-	{
-		SWidget->SetVisibility(EVisibility::Hidden);
-	}
-	else
-	{
-		SWidget->SetVisibility((HitTest == ERadiantHUDElementHitTest::None) ? EVisibility::HitTestInvisible : EVisibility::Visible);
-	}
 }
 
 void URadiantWebViewHUDElement::CallJavaScriptFunction(std::string HookName, std::string stringData)
@@ -810,5 +799,96 @@ void URadiantWebViewHUDElement::Serialize(FArchive& Ar)
 	int Version = ArchiveVersion;
 
 	Ar << Version;
+}
+
+void URadiantWebViewHUDElement::DrawHUD(UCanvas* Canvas, const FVector2D ViewportSize)
+{
+	ItemPosition = ViewportSize * Position;
+	ItemSize = ViewportSize * Size;
+
+	ItemPosition.X = FMath::FloorToFloat(ItemPosition.X + 0.5f);
+	ItemPosition.Y = FMath::FloorToFloat(ItemPosition.Y + 0.5f);
+	ItemSize.X = FMath::FloorToFloat(ItemSize.X + 0.5f);
+	ItemSize.Y = FMath::FloorToFloat(ItemSize.Y + 0.5f);
+
+
+	if (bAutoMatchViewportResolution)
+	{
+		WebView->Resize(FIntPoint(FMath::FloorToInt((ItemSize.X*ViewportResolutionFactor.X) + 0.5f), FMath::FloorToInt((ItemSize.Y*ViewportResolutionFactor.Y) + 0.5f)));
+	}
+
+	
+	if (WebView->WebViewTexture && WebView->WebViewTexture->Resource)
+	{
+		auto texture = WebView->WebViewTexture;
+
+		FCanvasTileItem TileItem(ItemPosition, texture->Resource, ItemSize, FLinearColor::White);
+		TileItem.BlendMode = WebView->IsTransparentRendering() ? SE_BLEND_Translucent : SE_BLEND_Opaque;
+		Canvas->DrawItem(TileItem);
+
+	}
+
+}
+
+
+FIntPoint URadiantWebViewHUDElement::LocalToTexture(FVector2D local)
+{
+	check(local.X>0 && local.Y>0);
+
+	FIntPoint textureSize = WebView->GetSize();
+
+	FVector2D scale = FVector2D(textureSize.X / ItemSize.X, textureSize.Y / ItemSize.Y);
+
+	return FIntPoint(local.X*scale.X, local.Y*scale.Y);
+}
+
+bool URadiantWebViewHUDElement::OnHitTest(FVector2D CursorPosition)
+{
+	if (!bVisible)
+	{
+		return false;
+	}
+
+	if (HitTest == ERadiantHUDElementHitTest::None)
+	{
+		return false;
+	}
+
+	FVector2D localPosition = CursorPosition-ItemPosition;
+	// Basic bounds check
+
+	if (localPosition.X<0 || localPosition.X>ItemSize.X ||
+		localPosition.Y<0 || localPosition.Y>ItemSize.Y)
+	{
+		return false;
+	}
+
+	if (HitTest == ERadiantHUDElementHitTest::Alpha)
+	{
+		FIntPoint texturePos = LocalToTexture(localPosition);
+
+		return (WebView.IsValid()) ? (WebView->GetPixelAlpha(texturePos.X, texturePos.Y) > 0) : false;
+	}
+
+	return true;
+
+}
+
+void URadiantWebViewHUDElement::HandleMouseMoveEvent(FVector2D MouseCoords)
+{
+	if (InputMode==ERadiantHUDElementInputMode::NoInput)
+	{
+		return;
+	}
+	
+	FVector2D localPos = MouseCoords - ItemPosition;
+	FIntPoint texturePos = LocalToTexture(localPos);
+
+	CefRuntimeMouseEvent Event;
+	Event.X = texturePos.X;
+	Event.Y = texturePos.Y;
+	Event.Modifiers = 0;
+
+	WebView->GetBrowser()->SendMouseMoveEvent(Event, false);
 }
 

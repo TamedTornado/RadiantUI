@@ -40,7 +40,7 @@ void ARadiantWebViewHUD::DrawHUD()
 
 	for (auto It = HUDElementInstances.CreateConstIterator(); It; ++It)
 	{
-		DrawHUDElement(ViewportSize, *It);
+		(*It)->DrawHUD(Canvas, ViewportSize);
 	}
 
 	PostDrawHUD();
@@ -71,11 +71,22 @@ void ARadiantWebViewHUD::BeginPlay()
 
 		Element->WebView->SetNetMode(GetNetMode());
 		Element->WebView->Start();
+// 
+// 		SAssignNew(Element->SWidget, SRadiantWebViewHUDElement).HUDOwner(this).HUDElement(Element);
+// 		GEngine->GameViewport->AddViewportWidgetContent(SAssignNew(Element->Container, SWeakWidget).PossiblyNullContent(Element->SWidget.ToSharedRef()), ZOrder++);
+// 		Element->SetSlateVisibility();
 
-		SAssignNew(Element->SWidget, SRadiantWebViewHUDElement).HUDOwner(this).HUDElement(Element);
-		GEngine->GameViewport->AddViewportWidgetContent(SAssignNew(Element->Container, SWeakWidget).PossiblyNullContent(Element->SWidget.ToSharedRef()), ZOrder++);
-		Element->SetSlateVisibility();
+	}
 
+	// Now tell the viewport client about ourselves.
+
+	URadiantGameViewportClient *viewport = Cast<URadiantGameViewportClient>(GEngine->GameViewport);
+	if (viewport)
+	{
+		viewport->SetHUD(this);
+	} else
+	{
+		UE_LOG(RadiantUILog, Error, TEXT("URadiantGameViewportClient isn't the ViewportClient. Set this in the project settings to use HUD."));
 	}
 
 	Super::BeginPlay();
@@ -96,39 +107,6 @@ void ARadiantWebViewHUD::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	Super::EndPlay(EndPlayReason);
 }
 
-void ARadiantWebViewHUD::DrawHUDElement(const FVector2D& ViewportSize, URadiantWebViewHUDElement* InElement)
-{
-	if (!InElement->SWidget.IsValid())
-	{
-		return;
-	}
-
-	FRadiantWebView* WebView = InElement->WebView.Get();
-
-	FVector2D ItemPosition = ViewportSize * InElement->Position;
-	FVector2D ItemSize = ViewportSize * InElement->Size;
-
-	ItemPosition.X = FMath::FloorToFloat(ItemPosition.X + 0.5f);
-	ItemPosition.Y = FMath::FloorToFloat(ItemPosition.Y + 0.5f);
-	ItemSize.X = FMath::FloorToFloat(ItemSize.X + 0.5f);
-	ItemSize.Y = FMath::FloorToFloat(ItemSize.Y + 0.5f);
-
-	InElement->SWidget->ScreenPosition = ItemPosition;
-	InElement->SWidget->ScreenSize = ItemSize;
-
-	if (InElement->bAutoMatchViewportResolution)
-	{
-		WebView->Resize(FIntPoint(FMath::FloorToInt((ItemSize.X*InElement->ViewportResolutionFactor.X) + 0.5f), FMath::FloorToInt((ItemSize.Y*InElement->ViewportResolutionFactor.Y) + 0.5f)));
-	}
-
-	if (InElement->bVisible && WebView->HasInitialFrame() && WebView->WebViewCanvas && WebView->WebViewCanvas->RenderTargetTexture)
-	{
-		FCanvasTileItem TileItem(ItemPosition, WebView->WebViewCanvas->RenderTargetTexture->Resource, ItemSize, FLinearColor::White);
-		TileItem.BlendMode = WebView->IsTransparentRendering() ? SE_BLEND_Translucent : SE_BLEND_Opaque;
-		Canvas->DrawItem(TileItem);
-	}
-}
-
 void ARadiantWebViewHUD::Serialize(FArchive& Ar)
 {
 	Super::Serialize(Ar);
@@ -137,6 +115,26 @@ void ARadiantWebViewHUD::Serialize(FArchive& Ar)
 
 	int Version = ArchiveVersion;
 	Ar << Version;
+}
+
+FVector2D ARadiantWebViewHUD::GetViewportSize()
+{
+	return FVector2D(Canvas->SizeX, Canvas->SizeY);
+}
+
+void ARadiantWebViewHUD::HandleMouseMove(int32 MouseX, int32 MouseY)
+{
+	FVector2D MouseCoords(MouseX, MouseY);
+
+	for (auto It = HUDElementInstances.CreateConstIterator(); It; ++It)
+	{
+		URadiantWebViewHUDElement* Element = *It;
+	
+		if (Element->OnHitTest(MouseCoords))
+		{
+			Element->HandleMouseMoveEvent(MouseCoords);
+		}
+	}
 }
 
 /*bool ARadiantWebViewHUD::HandleKeyDown(const FKey& Key)

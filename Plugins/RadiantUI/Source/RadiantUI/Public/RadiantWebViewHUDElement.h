@@ -131,6 +131,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HUD|Element")
 	FVector2D Size;
 
+
+
 	UFUNCTION(BlueprintCallable, Category = "HUD|Element")
 	void SetVisible(bool IsVisible);
 
@@ -174,21 +176,37 @@ public:
 	virtual UWorld* GetWorld() const override;
 	// End UObject Interface
 
+	void DrawHUD(UCanvas* Canvas, const FVector2D ViewportSize);
+
+	// Return true if this element is under the current cursor position, taking into account bounds and alpha (if enabled)
+	bool OnHitTest(FVector2D CursorPosition);
+
+	void HandleMouseMoveEvent(FVector2D MouseCoords);
+
 	void CallJavaScriptFunction(std::string HookName, std::string stringData);
 	void BindJSONFunction(std::string hookName, std::function<void(TSharedPtr<FJsonObject>)> boundFunction);
 	void UnbindJSONFunction(std::string hookName);
 	void RemoveAllJSONBindings();
 
 private:
+	// Changed every Draw, to show the screen position and size of this hud element.
+	FVector2D ItemPosition;
+	FVector2D ItemSize;
+
 	std::map<std::string, std::function<void(TSharedPtr<FJsonObject>)>> JSONFunctions;
 	bool HandleJSONFunctions(std::string HookName, ICefRuntimeVariantList* Arguments);
 
 	UWorld* World;
 
-	void SetSlateVisibility();
+
 	void OnExecuteJSHook(const FString& HookName, ICefRuntimeVariantList* Arguments);
+	
+	// Given a local coordinate, return the coordinate in the underlying texture.
+	FIntPoint LocalToTexture(FVector2D local);
 	friend class ARadiantWebViewHUD;
 
-	TSharedPtr<class SWeakWidget> Container;
-	TSharedPtr<SRadiantWebViewHUDElement> SWidget;
+	// Removed slate crap
+//	void SetSlateVisibility();
+// 	TSharedPtr<class SWeakWidget> Container;
+// 	TSharedPtr<SRadiantWebViewHUDElement> SWidget;
 };

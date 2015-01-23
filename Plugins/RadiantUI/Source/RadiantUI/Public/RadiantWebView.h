@@ -204,6 +204,8 @@ private:
 	ICefWebView* volatile WebView;
 
 	FString URL;
+
+	// Size of the backing texture.
 	FIntPoint Size;
 	FVector2D CursorPosition;
 	FColor InitialCanvasColor;

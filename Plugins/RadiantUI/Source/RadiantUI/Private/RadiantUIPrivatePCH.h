@@ -23,6 +23,7 @@
 #include "RadiantWebViewActor.h"
 #include "RadiantStaticMeshWebViewActor.h"
 #include "RadiantCanvasRenderTarget.h"
+#include "RadiantGameViewportClient.h"
 #include "CefBind.h"
 
 ICefRuntimeAPI *GetCefRuntime();

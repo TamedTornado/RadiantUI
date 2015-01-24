@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// (C) 2015 Jason Maskell
 
 #pragma once
 
@@ -9,7 +9,9 @@
 class ARadiantWebViewHUD;
 
 /**
- * 
+ * This GameViewPortClient implementation exists in order to allow Unreal to communicate mouse and keyboard events to HUD based Radiant UIs.
+
+   Due to a change in UE4.5 that removed the previous functionality, this allows us to do alpha hit testing again.
  */
 UCLASS()
 class RADIANTUI_API URadiantGameViewportClient : public UGameViewportClient
@@ -17,6 +19,14 @@ class RADIANTUI_API URadiantGameViewportClient : public UGameViewportClient
 	GENERATED_BODY()
 private:
 	ARadiantWebViewHUD *HUD;
+
+	TSet<FKey> PressedButtons;
+	TSharedPtr<FModifierKeysState> GetModifiers();
+
+	// Mouse coordinate tracking
+	FVector2D ScreenSpacePosition;
+	FVector2D LastScreenSpacePosition;
+	FVector2D Delta;
 
 public:
 
@@ -27,5 +37,7 @@ public:
 	
 	void CapturedMouseMove( FViewport* InViewport, int32 InMouseX, int32 InMouseY ) override;
 	void MouseMove(FViewport* Viewport,int32 X,int32 Y) override;
+	
+
 	void SetHUD(ARadiantWebViewHUD* hud);
 };

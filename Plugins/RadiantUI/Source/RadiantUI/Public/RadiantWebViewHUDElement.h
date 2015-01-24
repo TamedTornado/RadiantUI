@@ -3,8 +3,6 @@
 
 #pragma once 
 
-#include "SlateCore.h"
-#include "SCompoundWidget.h"
 #include "RadiantWebView.h"
 #include "RadiantJavaScriptFunctionCallTargetInterface.h"
 #include <functional>
@@ -15,61 +13,6 @@ class FJsonObject;
 class ARadiantWebViewHUD;
 class URadiantWebViewHUDElement;
 struct CefRuntimeMouseEvent;
-
-class SRadiantWebViewHUDElement : public SCompoundWidget
-{
-public:
-	SLATE_BEGIN_ARGS(SRadiantWebViewHUDElement)
-	{}
-
-	SLATE_ARGUMENT(TWeakObjectPtr<ARadiantWebViewHUD>, HUDOwner)
-	SLATE_ARGUMENT(TWeakObjectPtr<URadiantWebViewHUDElement>, HUDElement)
-
-	SLATE_END_ARGS()
-
-	void Construct(const FArguments& InArgs);
-
-	virtual void Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime) override;
-
-	virtual FReply OnMouseButtonDown(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) override;
-
-	virtual FReply OnMouseButtonUp(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) override;
-
-	virtual FReply OnMouseMove(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) override;
-
-	virtual FReply OnMouseWheel(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) override;
-
-	virtual FReply OnMouseButtonDoubleClick(const FGeometry& InMyGeometry, const FPointerEvent& InMouseEvent) override;
-
-	virtual FCursorReply OnCursorQuery(const FGeometry& MyGeometry, const FPointerEvent& CursorEvent) const override;
-	
-	virtual FReply OnKeyDown(const FGeometry& MyGeometry, const FKeyEvent& InKeyboardEvent) override;
-	
-	virtual FReply OnKeyUp(const FGeometry& MyGeometry, const FKeyEvent& InKeyboardEvent) override;
-
-	virtual FReply OnKeyChar(const FGeometry& MyGeometry, const FCharacterEvent& InCharacterEvent) override;
-
-	virtual bool SupportsKeyboardFocus() const override;
-
-	virtual FReply OnFocusReceived(const FGeometry& MyGeometry, const FFocusEvent& InFocusEvent);
-	virtual void OnFocusLost(const FFocusEvent& InFocusEvent);
-
-private:
-
-	friend class ARadiantWebViewHUD;
-
-	void GetMouseState(const FGeometry& InGeometry, const FPointerEvent& InPointerEvent, CefRuntimeMouseEvent &OutMouseEvent);
-	
-	FVector2D AbsoluteToLocal(const FGeometry& MyGeometry, const FVector2D AbsolutePosition);
-
-	FVector2D ScreenPosition;
-	FVector2D ScreenSize;
-	bool MouseCaptured;
-
-	TWeakObjectPtr<ARadiantWebViewHUD> HUDOwner;
-	TWeakObjectPtr<URadiantWebViewHUDElement> HUDElement;
-
-};
 
 UENUM(BlueprintType)
 namespace ERadiantHUDElementInputMode
@@ -92,6 +35,8 @@ namespace ERadiantHUDElementHitTest
 		Alpha
 	};
 }
+
+struct FRadiantPointerEvent;
 
 UCLASS(abstract, DefaultToInstanced, Blueprintable)
 class RADIANTUI_API URadiantWebViewHUDElement : public UObject, public IRadiantJavaScriptFunctionCallTargetInterface
@@ -181,7 +126,11 @@ public:
 	// Return true if this element is under the current cursor position, taking into account bounds and alpha (if enabled)
 	bool OnHitTest(FVector2D CursorPosition);
 
-	void HandleMouseMoveEvent(FVector2D MouseCoords);
+	void HandleMouseMove(FRadiantPointerEvent &event);
+	void HandleMouseButtonDown(FRadiantPointerEvent &event);
+	void HandleMouseButtonUp(FRadiantPointerEvent &event);
+	void HandleMouseWheel(FRadiantPointerEvent &event);
+	void HandleMouseDoubleClick(FRadiantPointerEvent &event);
 
 	void CallJavaScriptFunction(std::string HookName, std::string stringData);
 	void BindJSONFunction(std::string hookName, std::function<void(TSharedPtr<FJsonObject>)> boundFunction);
@@ -204,9 +153,4 @@ private:
 	// Given a local coordinate, return the coordinate in the underlying texture.
 	FIntPoint LocalToTexture(FVector2D local);
 	friend class ARadiantWebViewHUD;
-
-	// Removed slate crap
-//	void SetSlateVisibility();
-// 	TSharedPtr<class SWeakWidget> Container;
-// 	TSharedPtr<SRadiantWebViewHUDElement> SWidget;
 };

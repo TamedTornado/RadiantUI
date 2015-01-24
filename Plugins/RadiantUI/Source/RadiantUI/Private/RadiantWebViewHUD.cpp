@@ -2,6 +2,7 @@
 // See LICENSE for licensing terms.
 
 #include "RadiantUIPrivatePCH.h"
+#include "InputEvents.h"
 
 ARadiantWebViewHUD::ARadiantWebViewHUD(const FObjectInitializer& ObjectInitializer)
 : Super(ObjectInitializer)
@@ -40,7 +41,11 @@ void ARadiantWebViewHUD::DrawHUD()
 
 	for (auto It = HUDElementInstances.CreateConstIterator(); It; ++It)
 	{
-		(*It)->DrawHUD(Canvas, ViewportSize);
+		URadiantWebViewHUDElement *Element = *It;
+		if (Element->bVisible)
+		{
+			Element->DrawHUD(Canvas, ViewportSize);
+		}
 	}
 
 	PostDrawHUD();
@@ -122,18 +127,68 @@ FVector2D ARadiantWebViewHUD::GetViewportSize()
 	return FVector2D(Canvas->SizeX, Canvas->SizeY);
 }
 
-void ARadiantWebViewHUD::HandleMouseMove(int32 MouseX, int32 MouseY)
+URadiantWebViewHUDElement* ARadiantWebViewHUD::GetAffectedElement(FRadiantPointerEvent &event)
 {
-	FVector2D MouseCoords(MouseX, MouseY);
-
 	for (auto It = HUDElementInstances.CreateConstIterator(); It; ++It)
 	{
 		URadiantWebViewHUDElement* Element = *It;
-	
-		if (Element->OnHitTest(MouseCoords))
+
+		if (Element->OnHitTest(event.GetScreenSpacePosition()))
 		{
-			Element->HandleMouseMoveEvent(MouseCoords);
+			return Element;
 		}
+	}
+
+	return nullptr;
+}
+
+void ARadiantWebViewHUD::HandleMouseMove(FRadiantPointerEvent &event)
+{
+	URadiantWebViewHUDElement *element = GetAffectedElement(event);
+
+	if (element!=nullptr)
+	{
+		element->HandleMouseMove(event);
+	}
+}
+
+void ARadiantWebViewHUD::HandleMouseButtonDown(FRadiantPointerEvent &event)
+{
+	URadiantWebViewHUDElement *element = GetAffectedElement(event);
+
+	if (element != nullptr)
+	{
+		element->HandleMouseButtonDown(event);
+	}
+}
+
+void ARadiantWebViewHUD::HandleMouseButtonUp(FRadiantPointerEvent &event)
+{
+	URadiantWebViewHUDElement *element = GetAffectedElement(event);
+
+	if (element != nullptr)
+	{
+		element->HandleMouseButtonUp(event);
+	}
+}
+
+void ARadiantWebViewHUD::HandleMouseWheel(FRadiantPointerEvent &event)
+{
+	URadiantWebViewHUDElement *element = GetAffectedElement(event);
+
+	if (element != nullptr)
+	{
+		element->HandleMouseWheel(event);
+	}
+}
+
+void ARadiantWebViewHUD::HandleMouseDoubleClick(FRadiantPointerEvent &event)
+{
+	URadiantWebViewHUDElement *element = GetAffectedElement(event);
+
+	if (element != nullptr)
+	{
+		element->HandleMouseDoubleClick(event);
 	}
 }
 

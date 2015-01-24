@@ -819,6 +819,7 @@ void FRadiantWebView::OnCursorChange(void* InPlatformCursorHandle)
 // Called when the focused item changes
 void FRadiantWebView::FocusedNodeChanged(bool InIsEditableField)
 {
+	// TODO: Callback to owners that are interested to tell them we've got focus
 	bFocusingEditableField = InIsEditableField;
 }
 

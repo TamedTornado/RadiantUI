@@ -7,6 +7,8 @@
 #include "GameFramework/HUD.h"
 #include "RadiantWebViewHUD.generated.h"
 
+struct FRadiantPointerEvent;
+
 UCLASS(BlueprintType, Blueprintable)
 class RADIANTUI_API ARadiantWebViewHUD : public AHUD
 {
@@ -43,9 +45,14 @@ public:
 	FVector2D GetViewportSize();
 
 	// The RadiantGameViewportClient sends mouse events to the HUD indiscriminately, allowing it to give them to its children or not.
-	void HandleMouseMove(int32 MouseX, int32 MouseY);
-
+	void HandleMouseMove(FRadiantPointerEvent &event);
+	void HandleMouseButtonDown(FRadiantPointerEvent &event);
+	void HandleMouseButtonUp(FRadiantPointerEvent &event);
+	void HandleMouseWheel(FRadiantPointerEvent &event);
+	void HandleMouseDoubleClick(FRadiantPointerEvent &event);
 private:
+	URadiantWebViewHUDElement* GetAffectedElement(FRadiantPointerEvent &event);
+
 
 	friend class SRadiantWebViewHUD;
 };

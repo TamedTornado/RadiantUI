@@ -5,8 +5,6 @@
 #include "Engine.h"
 #include "GameFramework/PlayerInput.h"
 #include "Net/UnrealNetwork.h"
-#include "SlateBasics.h"
-#include "Slate/SlateTextures.h"
 #include "RadiantUI.h"
 #include "RadiantLogCategories.h"
 #include "RadiantJavaScriptFunctionCallTargetInterface.h"

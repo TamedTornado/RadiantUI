@@ -192,6 +192,22 @@ void ARadiantWebViewHUD::HandleMouseDoubleClick(FRadiantPointerEvent &event)
 	}
 }
 
+void ARadiantWebViewHUD::PreDrawHUD()
+{
+	if (OnPreDrawHUD)
+	{
+		OnPreDrawHUD(Canvas);
+	}
+}
+
+void ARadiantWebViewHUD::PostDrawHUD()
+{
+	if (OnPostDrawHUD)
+	{
+		OnPostDrawHUD(Canvas);
+	}
+}
+
 /*bool ARadiantWebViewHUD::HandleKeyDown(const FKey& Key)
 {
 	bool handled = false;

@@ -598,7 +598,7 @@ void URadiantWebViewHUDElement::DrawHUD(UCanvas* Canvas, const FVector2D Viewpor
 
 FIntPoint URadiantWebViewHUDElement::LocalToTexture(FVector2D local)
 {
-	check(local.X>0 && local.Y>0);
+	check(local.X>=0 && local.Y>=0);
 
 	FIntPoint textureSize = WebView->GetSize();
 

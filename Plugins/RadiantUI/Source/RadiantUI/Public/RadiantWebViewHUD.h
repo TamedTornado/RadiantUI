@@ -5,6 +5,7 @@
 
 #include "RadiantWebViewHUDElement.h"
 #include "GameFramework/HUD.h"
+#include <functional>
 #include "RadiantWebViewHUD.generated.h"
 
 struct FRadiantPointerEvent;
@@ -15,6 +16,8 @@ class RADIANTUI_API ARadiantWebViewHUD : public AHUD
 	GENERATED_BODY()
 
 public:
+	std::function<void(UCanvas *)> OnPreDrawHUD;
+	std::function<void(UCanvas *)> OnPostDrawHUD;
 
 	ARadiantWebViewHUD(const FObjectInitializer& ObjectInitializer);
 
@@ -39,8 +42,8 @@ public:
 	virtual void PostInitializeComponents() override;
 	// End AActor Interface
 
-	virtual void PreDrawHUD() {}
-	virtual void PostDrawHUD() {}
+	virtual void PreDrawHUD();
+	virtual void PostDrawHUD();
 
 	FVector2D GetViewportSize();
 
@@ -52,7 +55,4 @@ public:
 	void HandleMouseDoubleClick(FRadiantPointerEvent &event);
 private:
 	URadiantWebViewHUDElement* GetAffectedElement(FRadiantPointerEvent &event);
-
-
-	friend class SRadiantWebViewHUD;
 };

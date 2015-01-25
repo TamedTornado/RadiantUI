@@ -23,7 +23,7 @@ void URadiantGameViewportClient::CapturedMouseMove(FViewport* InViewport, int32 
 
 void URadiantGameViewportClient::MouseMove(FViewport* Viewport, int32 X, int32 Y)
 {
-	UE_LOG(RadiantUILog, Log, TEXT("Mouse Move: %d,%d"), X, Y);
+	//UE_LOG(RadiantUILog, Log, TEXT("Mouse Move: %d,%d"), X, Y);
 
 	LastScreenSpacePosition = ScreenSpacePosition;
 	ScreenSpacePosition.X = X;
@@ -42,7 +42,7 @@ void URadiantGameViewportClient::MouseMove(FViewport* Viewport, int32 X, int32 Y
 
 bool URadiantGameViewportClient::InputKey(FViewport* Viewport, int32 ControllerId, FKey Key, EInputEvent EventType, float AmountDepressed/* =1.f */, bool bGamepad/* =false */)
 {
-	UE_LOG(RadiantUILog, Log, TEXT("Input Key: %s"), *Key.ToString());
+	//UE_LOG(RadiantUILog, Log, TEXT("Input Key: %s"), *Key.ToString());
 
 	if (EventType==IE_Pressed)
 	{

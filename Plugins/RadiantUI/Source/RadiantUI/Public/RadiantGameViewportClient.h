@@ -29,6 +29,8 @@ private:
 	FVector2D Delta;
 
 public:
+	URadiantGameViewportClient(const class FObjectInitializer &PCIP);
+	virtual ~URadiantGameViewportClient() { }
 
 	bool InputKey(FViewport* Viewport, int32 ControllerId, FKey Key, EInputEvent EventType, float AmountDepressed/* =1.f */, bool bGamepad/* =false */) override;
 	bool InputChar(FViewport* Viewport,int32 ControllerId, TCHAR Character) override;

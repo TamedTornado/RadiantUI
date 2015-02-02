@@ -6,6 +6,8 @@
 #include "RadiantWebViewHUDElement.h"
 #include "GameFramework/HUD.h"
 #include <functional>
+#include "nano_signal_slot.h"
+
 #include "RadiantWebViewHUD.generated.h"
 
 struct FRadiantPointerEvent;
@@ -16,8 +18,8 @@ class RADIANTUI_API ARadiantWebViewHUD : public AHUD
 	GENERATED_BODY()
 
 public:
-	std::function<void(UCanvas *)> OnPreDrawHUD;
-	std::function<void(UCanvas *)> OnPostDrawHUD;
+	Nano::Signal<void(UCanvas *)> OnPreDrawHUD;
+	Nano::Signal<void(UCanvas *)> OnPostDrawHUD;
 
 	ARadiantWebViewHUD(const FObjectInitializer& ObjectInitializer);
 

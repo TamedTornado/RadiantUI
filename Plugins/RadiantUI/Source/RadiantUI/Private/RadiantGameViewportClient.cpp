@@ -3,6 +3,17 @@
 #include "RadiantGameViewportClient.h"
 #include "Engine.h"
 #include "InputEvents.h"
+#include "Vector2D.h"
+
+URadiantGameViewportClient::URadiantGameViewportClient(const class FObjectInitializer &PCIP) : 
+	UGameViewportClient(PCIP),
+	HUD(nullptr),
+	ScreenSpacePosition(FVector2D::ZeroVector),
+	LastScreenSpacePosition(FVector2D::ZeroVector),
+	Delta(FVector2D::ZeroVector)
+{
+	SetCaptureMouseOnClick(EMouseCaptureMode::NoCapture);
+}
 
 bool URadiantGameViewportClient::InputAxis(FViewport* Viewport, int32 ControllerId, FKey Key, float Delta, float DeltaTime, int32 NumSamples/* =1 */, bool bGamepad/* =false */)
 {

@@ -32,12 +32,12 @@ public:
 	URadiantGameViewportClient(const class FObjectInitializer &PCIP);
 	virtual ~URadiantGameViewportClient() { }
 
-	bool InputKey(FViewport* Viewport, int32 ControllerId, FKey Key, EInputEvent EventType, float AmountDepressed/* =1.f */, bool bGamepad/* =false */) override;
-	bool InputChar(FViewport* Viewport,int32 ControllerId, TCHAR Character) override;
-
-	bool InputAxis(FViewport* Viewport, int32 ControllerId, FKey Key, float Delta, float DeltaTime, int32 NumSamples/* =1 */, bool bGamepad/* =false */) override;
-	
-	void CapturedMouseMove( FViewport* InViewport, int32 InMouseX, int32 InMouseY ) override;
+ 	bool InputKey(FViewport* Viewport, int32 ControllerId, FKey Key, EInputEvent EventType, float AmountDepressed/* =1.f */, bool bGamepad/* =false */) override;
+// 	bool InputChar(FViewport* Viewport,int32 ControllerId, TCHAR Character) override;
+// 
+// 	bool InputAxis(FViewport* Viewport, int32 ControllerId, FKey Key, float Delta, float DeltaTime, int32 NumSamples/* =1 */, bool bGamepad/* =false */) override;
+// 	
+// 	void CapturedMouseMove( FViewport* InViewport, int32 InMouseX, int32 InMouseY ) override;
 	void MouseMove(FViewport* Viewport,int32 X,int32 Y) override;
 	
 

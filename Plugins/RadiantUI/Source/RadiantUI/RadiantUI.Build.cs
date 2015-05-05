@@ -24,8 +24,7 @@ namespace UnrealBuildTool.Rules
 				{
 					"Core",
 					"CoreUObject",
-                    "Engine",
-                    "NanoSignalSlot"
+                    "Engine"
 				}
 			);
 

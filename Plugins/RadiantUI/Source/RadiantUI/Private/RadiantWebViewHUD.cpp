@@ -194,12 +194,12 @@ void ARadiantWebViewHUD::HandleMouseDoubleClick(FRadiantPointerEvent &event)
 
 void ARadiantWebViewHUD::PreDrawHUD()
 {
-	OnPreDrawHUD(Canvas);
+	OnPreDrawHUD.Broadcast(Canvas);
 }
 
 void ARadiantWebViewHUD::PostDrawHUD()
 {
-	OnPostDrawHUD(Canvas);
+	OnPostDrawHUD.Broadcast(Canvas);
 }
 
 /*bool ARadiantWebViewHUD::HandleKeyDown(const FKey& Key)

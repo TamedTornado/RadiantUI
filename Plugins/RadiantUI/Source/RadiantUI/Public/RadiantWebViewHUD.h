@@ -6,11 +6,12 @@
 #include "RadiantWebViewHUDElement.h"
 #include "GameFramework/HUD.h"
 #include <functional>
-#include "nano_signal_slot.h"
 
 #include "RadiantWebViewHUD.generated.h"
 
 struct FRadiantPointerEvent;
+
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnHUD, UCanvas*);
 
 UCLASS(BlueprintType, Blueprintable)
 class RADIANTUI_API ARadiantWebViewHUD : public AHUD
@@ -18,8 +19,8 @@ class RADIANTUI_API ARadiantWebViewHUD : public AHUD
 	GENERATED_BODY()
 
 public:
-	Nano::Signal<void(UCanvas *)> OnPreDrawHUD;
-	Nano::Signal<void(UCanvas *)> OnPostDrawHUD;
+	FOnHUD							OnPreDrawHUD;
+	FOnHUD							OnPostDrawHUD;
 
 	ARadiantWebViewHUD(const FObjectInitializer& ObjectInitializer);
 
